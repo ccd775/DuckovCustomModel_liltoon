@@ -1017,8 +1017,9 @@ namespace DuckovCustomModel.MonoBehaviours
 
         private static void ReplaceRenderersShader(Renderer[] renderers, string? shaderName = null)
         {
-            var shader = shaderName != null ? Shader.Find(shaderName) : GameDefaultShader;
-            if (shader == null)
+            var targetShader = shaderName != null ? Shader.Find(shaderName) : GameDefaultShader;
+            
+            if (targetShader == null)
             {
                 ModLogger.LogError(shaderName != null
                     ? $"Shader '{shaderName}' not found."
@@ -1030,7 +1031,17 @@ namespace DuckovCustomModel.MonoBehaviours
             foreach (var material in renderer.materials)
             {
                 if (material == null) continue;
-                material.shader = shader;
+                
+                // Preserve valid custom shaders (not the error shader)
+                if (material.shader != null && 
+                    material.shader.name != "Hidden/InternalErrorShader" &&
+                    shaderName == null) // Only preserve if no specific shader requested
+                {
+                    ModLogger.Log($"Preserving custom shader '{material.shader.name}' for material '{material.name}'");
+                    continue;
+                }
+                
+                material.shader = targetShader;
                 if (material.HasProperty(EmissionColor))
                     material.SetColor(EmissionColor, Color.black);
             }
