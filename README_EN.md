@@ -386,6 +386,94 @@ Model Bundle Folder/
   - Used to control the playback frequency of footstep sounds when the character runs
   - If not specified, will automatically use the original character's run footstep frequency setting
 
+#### Shader Bundle Support (Advanced)
+
+For models using custom shaders that don't exist in the base game, you can provide a separate Shader Bundle:
+
+- `ShaderBundlePath` (optional): Path to shader AssetBundle file, relative to the model bundle folder
+  - Contains custom shaders and optionally a ShaderVariantCollection
+  - Loaded before the model bundle to ensure shaders are available when materials load
+  - Example: `"shaders.bundle"`
+- `ShaderVariantPath` (optional): Path to ShaderVariantCollection asset within the Shader Bundle
+  - Used for shader warmup to prevent runtime compilation stuttering
+  - Only used if `WarmupShaders` is true
+  - Example: `"Assets/ShaderVariants/CharacterShaders.shadervariants"`
+- `WarmupShaders` (optional): Whether to warmup shader variants on load (default: `true`)
+  - When true, shaders are compiled during loading to prevent stuttering during gameplay
+  - When false, shaders compile on-demand (may cause frame drops)
+
+**Example with Shader Bundle:**
+
+```json
+{
+  "BundleName": "CustomCharacterWithShaders",
+  "BundlePath": "character.bundle",
+  "ShaderBundlePath": "shaders.bundle",
+  "ShaderVariantPath": "Assets/ShaderVariants/CharacterShaders.shadervariants",
+  "WarmupShaders": true,
+  "Models": [
+    {
+      "ModelID": "custom_char_01",
+      "Name": "Custom Character",
+      "PrefabPath": "Assets/Characters/CustomChar.prefab",
+      "Target": ["Character"],
+      "Features": ["NoAutoShaderReplace"]
+    }
+  ]
+}
+```
+
+**Important Notes:**
+- When using custom shaders, add `"NoAutoShaderReplace"` to the `Features` array to prevent automatic shader replacement
+- Shader bundles are kept in memory after unloading to preserve shader assets
+- Platform support: Windows (StandaloneWindows64) initially - ensure shader bundles are built for the correct platform
+- Shader bundles are optional - models without custom shaders work as before
+
+**Building Shader Bundles in Unity:**
+
+1. Create a new folder in your Unity project for shader variants (e.g., `Assets/ShaderVariants`)
+2. Create a ShaderVariantCollection: `Create > Shader Variant Collection`
+3. Add your custom shaders to the collection and configure variants
+4. Create an Editor script to build the shader bundle:
+
+```csharp
+using UnityEditor;
+using UnityEngine;
+
+public class ShaderBundleBuilder
+{
+    [MenuItem("Assets/Build Shader Bundle")]
+    static void BuildShaderBundle()
+    {
+        // Ensure output directory exists
+        string outputPath = "Assets/../Output";
+        if (!System.IO.Directory.Exists(outputPath))
+            System.IO.Directory.CreateDirectory(outputPath);
+
+        // Build shader bundle
+        BuildPipeline.BuildAssetBundles(
+            outputPath,
+            new AssetBundleBuild[] {
+                new AssetBundleBuild {
+                    assetBundleName = "shaders.bundle",
+                    assetNames = new[] {
+                        "Assets/ShaderVariants/CharacterShaders.shadervariants"
+                    }
+                }
+            },
+            BuildAssetBundleOptions.None,
+            BuildTarget.StandaloneWindows64
+        );
+        
+        Debug.Log("Shader bundle built successfully!");
+    }
+}
+```
+
+5. Run the script: `Assets > Build Shader Bundle`
+6. Copy the generated `shaders.bundle` file to your model folder
+7. Configure `ShaderBundlePath` and `ShaderVariantPath` in `bundleinfo.json`
+
 ## Locator Points
 
 To ensure that equipment (weapons, armor, backpacks, etc.) in the game can be correctly bound to custom models, the model Prefab needs to include corresponding locator point GameObjects.
