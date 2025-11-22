@@ -426,7 +426,7 @@ namespace DuckovCustomModel.Managers
                 // Unload old bundle if reloading
                 if (forceReload && LoadedShaderBundles.TryGetValue(shaderBundlePath, out var oldBundle))
                 {
-                    oldBundle.Unload(false); // Don't unload shader assets
+                    oldBundle.Unload(false); // Don't unload shader assets to prevent shaders from being destroyed and causing missing material errors
                     LoadedShaderBundles.Remove(shaderBundlePath);
                 }
 
@@ -476,6 +476,7 @@ namespace DuckovCustomModel.Managers
             {
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
 
+                const int bufferSize = 64 * 1024;
                 byte[] bundleData;
                 await using (var fileStream = new FileStream(
                     shaderBundlePath, 
@@ -486,7 +487,22 @@ namespace DuckovCustomModel.Managers
                     true))
                 {
                     bundleData = new byte[fileStream.Length];
-                    await fileStream.ReadAsync(bundleData, 0, bundleData.Length, cancellationToken);
+                    var bytesRead = 0;
+
+                    while (bytesRead < bundleData.Length)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var remaining = bundleData.Length - bytesRead;
+                        var toRead = Math.Min(bufferSize, remaining);
+                        var read = await fileStream.ReadAsync(bundleData, bytesRead, toRead, cancellationToken)
+                            .ConfigureAwait(false);
+                        if (read == 0) break;
+
+                        bytesRead += read;
+
+                        if (bytesRead % (512 * 1024) == 0)
+                            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                    }
                 }
 
                 await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);

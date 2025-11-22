@@ -1027,6 +1027,9 @@ namespace DuckovCustomModel.MonoBehaviours
                 return;
             }
 
+            var preservedShaderCount = 0;
+            var replacedMaterialCount = 0;
+
             foreach (var renderer in renderers)
             foreach (var material in renderer.materials)
             {
@@ -1037,13 +1040,23 @@ namespace DuckovCustomModel.MonoBehaviours
                     material.shader.name != "Hidden/InternalErrorShader" &&
                     shaderName == null) // Only preserve if no specific shader requested
                 {
-                    ModLogger.Log($"Preserving custom shader '{material.shader.name}' for material '{material.name}'");
+                    preservedShaderCount++;
                     continue;
                 }
                 
                 material.shader = targetShader;
                 if (material.HasProperty(EmissionColor))
                     material.SetColor(EmissionColor, Color.black);
+                replacedMaterialCount++;
+            }
+
+            if (preservedShaderCount > 0)
+            {
+                ModLogger.Log($"Preserved {preservedShaderCount} custom shader(s) across materials");
+            }
+            if (replacedMaterialCount > 0)
+            {
+                ModLogger.Log($"Replaced shader for {replacedMaterialCount} material(s) with '{targetShader.name}'");
             }
         }
 
