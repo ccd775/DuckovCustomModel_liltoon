@@ -476,7 +476,8 @@ public class ShaderBundleBuilder
 
 ### lilToon Shader Usage Guide
 
-**Important Notice**: If your model uses **lilToon** Shader, **DO NOT** package it separately as a Shader Bundle! lilToon has special build-time auto-optimization mechanisms that require it to be bundled together with the model.
+> **⚠️ Important Notice**  
+> If your model uses lilToon Shader, DO NOT package it separately as a Shader Bundle! lilToon has special build-time auto-optimization mechanisms that require it to be bundled together with the model.
 
 #### Why lilToon Should Not Be Packaged Separately
 

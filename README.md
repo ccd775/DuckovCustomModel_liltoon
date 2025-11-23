@@ -476,7 +476,8 @@ public class ShaderBundleBuilder
 
 ### lilToon Shader 使用指南
 
-**重要提示**：如果您的模型使用 **lilToon** Shader，请**不要**将其独立打包为 Shader Bundle！lilToon 有特殊的构建时自动优化机制，需要与模型一起打包。
+> **⚠️ 重要提示**  
+> 如果您的模型使用 lilToon Shader，请不要将其独立打包为 Shader Bundle！lilToon 有特殊的构建时自动优化机制，需要与模型一起打包。
 
 #### 为什么 lilToon 不需要独立打包
 
