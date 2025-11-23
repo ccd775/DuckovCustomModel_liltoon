@@ -474,6 +474,160 @@ public class ShaderBundleBuilder
 6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
 7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
 
+## lilToon Shader 工作流程指南
+
+### 重要提示
+
+**lilToon 着色器具有特殊的构建时自动优化机制（Auto Build / Shader Stripping），不应该独立打包。**
+
+### 为什么 lilToon 不需要独立打包
+
+lilToon 是一个具有强大自动优化功能的着色器系统，它的工作方式与标准 Unity 着色器有所不同：
+
+1. **自动变体优化**：lilToon 在构建 AssetBundle 时会自动分析材质属性，只保留实际使用的着色器变体
+2. **材质属性剔除**：通过材质的 Advanced 设置中的 "Remove Unused Properties" 功能，lilToon 会移除未使用的属性以优化性能
+3. **构建时集成**：这些优化机制需要在 AssetBundle 构建时与材质一起运行，分离打包会导致优化失效
+4. **依赖关系保持**：着色器与材质的依赖关系必须保持在同一个 AssetBundle 中，否则可能导致变体丢失或功能异常
+
+**因此，强烈建议将 lilToon 着色器与模型 Prefab 打包在同一个 AssetBundle 中。**
+
+### lilToon 推荐工作流程
+
+#### 步骤 1：安装 lilToon 插件
+
+1. 从 [lilToon 官方仓库](https://github.com/lilxyzw/lilToon) 或 Booth 下载最新版本
+2. 将 lilToon 导入到您的 Unity 项目中
+3. 确保 lilToon 着色器在项目中可用
+
+#### 步骤 2：创建和配置材质
+
+1. 创建使用 lilToon 着色器的材质
+2. 配置材质属性以获得想要的视觉效果
+3. **重要**：在材质的 Advanced 设置中：
+   - 找到 "Remove Unused Properties" 选项
+   - **建议启用此选项**以移除未使用的属性，优化打包大小和性能
+   - 这将确保只有实际使用的着色器特性被包含在 AssetBundle 中
+
+#### 步骤 3：打包配置
+
+在打包模型时，**不要**为 lilToon 着色器设置独立的 AssetBundle Name。具体做法：
+
+1. **模型 Prefab**：设置 AssetBundle Name（例如：`mymodel`）
+2. **材质文件**：设置相同的 AssetBundle Name（例如：`mymodel`）
+3. **lilToon 着色器**：**不设置** AssetBundle Name（留空或设为 None）
+4. **贴图文件**：根据需要设置（通常与材质使用相同的 Bundle）
+
+Unity 构建系统会自动将着色器与使用它的材质一起打包到同一个 AssetBundle 中。
+
+#### 步骤 4：配置 bundleinfo.json
+
+在您的 `bundleinfo.json` 中，**留空** `ShaderBundlePath` 字段：
+
+```json
+{
+  "BundleName": "我的 lilToon 模型",
+  "BundlePath": "mymodel.assetbundle",
+  "Models": [
+    {
+      "ModelID": "my_liltoon_model",
+      "Name": "lilToon 角色模型",
+      "PrefabPath": "Assets/Characters/MyCharacter.prefab",
+      "Target": ["Character"],
+      "Features": ["NoAutoShaderReplace"]
+    }
+  ]
+}
+```
+
+**关键配置说明**：
+
+- **不要配置** `ShaderBundlePath` - 留空或不包含此字段
+- **不要配置** `ShaderVariantPath` - lilToon 自动处理变体优化
+- **不要配置** `WarmupShaders` - 无需手动预热
+- **必须添加** `"NoAutoShaderReplace"` 到 `Features` 数组，防止系统自动替换着色器
+
+#### 步骤 5：构建 AssetBundle
+
+使用 Unity 标准 AssetBundle 构建流程构建您的模型包：
+
+```csharp
+BuildPipeline.BuildAssetBundles(
+    outputPath,
+    BuildAssetBundleOptions.None,
+    BuildTarget.StandaloneWindows64
+);
+```
+
+lilToon 的自动优化会在构建过程中自动运行，您无需额外操作。
+
+### lilToon 材质设置最佳实践
+
+1. **Remove Unused Properties**：
+   - 在材质的 Advanced 设置中启用此选项
+   - 这会显著减小 AssetBundle 大小
+   - 只保留实际使用的着色器特性
+
+2. **着色器变体优化**：
+   - lilToon 会根据材质设置自动选择需要的变体
+   - 避免启用不需要的特性（如未使用的 Outline、Emission 等）
+   - 每启用一个特性都会增加着色器复杂度
+
+3. **性能考虑**：
+   - lilToon 功能强大但也相对复杂
+   - 在移动端或低端设备上注意性能影响
+   - 考虑使用 lilToon 的 "Lite" 版本以获得更好的性能
+
+### 常见问题
+
+**Q: 我能将 lilToon 着色器独立打包吗？**
+
+A: 不推荐。虽然技术上可行，但会导致以下问题：
+- 丢失自动变体优化
+- 材质属性剔除失效
+- 可能出现着色器变体不匹配
+- 包体积增大
+
+**Q: 如果我已经独立打包了 lilToon 怎么办？**
+
+A: 建议重新打包：
+1. 移除着色器的 AssetBundle Name 设置
+2. 删除独立的着色器 AssetBundle
+3. 重新构建模型 AssetBundle（着色器会自动包含）
+4. 更新 `bundleinfo.json`，移除 `ShaderBundlePath` 配置
+
+**Q: 为什么我的 lilToon 材质在游戏中显示为粉红色？**
+
+A: 可能的原因：
+1. 着色器未正确包含在 AssetBundle 中 - 检查构建日志
+2. 缺少 `"NoAutoShaderReplace"` 特性 - 添加到 `Features` 数组
+3. lilToon 版本不兼容 - 确保使用兼容的版本
+
+**Q: 如何检查我的 AssetBundle 是否正确包含了 lilToon？**
+
+A: 使用 Unity 的 AssetBundle Browser 工具：
+1. 打开 Window > AssetBundle Browser
+2. 选择您的模型 AssetBundle
+3. 检查是否包含 lilToon 着色器资源
+4. 确认着色器与材质在同一个 Bundle 中
+
+### 对于高级用户
+
+如果您确实需要使用独立的着色器包（例如多个模型共享同一组着色器），请注意：
+
+1. **这不适用于 lilToon**：lilToon 的优化机制要求着色器与材质一起打包
+2. **对于其他自定义着色器**：可以使用 `ShaderBundlePath` 功能，但需要：
+   - 手动管理着色器变体集合
+   - 确保所有需要的变体都包含在 ShaderVariantCollection 中
+   - 测试所有材质在不同情况下的渲染效果
+
+3. **ShaderVariantCollection 工具**：对于需要手动管理变体的情况，可以使用编辑器工具辅助收集变体（见下文）
+
+### 相关资源
+
+- [lilToon 官方文档](https://lilxyzw.github.io/lilToon/)
+- [lilToon GitHub 仓库](https://github.com/lilxyzw/lilToon)
+- Unity AssetBundle 最佳实践文档
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。
