@@ -474,6 +474,74 @@ public class ShaderBundleBuilder
 6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
 7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
 
+#### 关于 lilToon Shader 的特别说明
+
+**lilToon 是一个特殊的着色器系统，具有构建时自动优化机制（Auto Build / Shader Stripping）。对于使用 lilToon 的模型，强烈建议采用以下打包策略：**
+
+**推荐做法：将 lilToon Shader 与模型一起打包**
+
+不要将 lilToon shader 单独打包到 shader bundle 中。应该将其与模型 prefab 一起打包到同一个 AssetBundle 中。
+
+**原因：**
+
+1. **自动优化机制**：lilToon 在构建时会自动分析场景中使用的材质属性，并剔除未使用的 shader 变体和属性
+2. **变体依赖性**：如果将 shader 单独打包，lilToon 无法正确检测模型实际使用的变体，可能导致：
+   - 必要的 shader 变体丢失
+   - 材质属性不完整
+   - 运行时渲染错误或粉红色材质
+3. **内置优化**：lilToon 的 shader 变体收集和优化是在 AssetBundle 构建过程中自动完成的，将其与模型一起打包可以确保这些优化正常工作
+
+**操作步骤：**
+
+1. **安装 lilToon**
+   - 从 lilToon 官方仓库或 Unity Asset Store 获取 lilToon
+   - 推荐访问：[lilToon GitHub 仓库](https://github.com/lilxyzw/lilToon)
+   - 导入到 Unity 项目中
+
+2. **配置材质**
+   - 为模型创建使用 lilToon shader 的材质
+   - 在材质的 `Advanced` 设置中：
+     - 建议启用 `Remove Unused Properties`（移除未使用的属性），这有助于减小最终包体大小
+     - 确保配置了模型实际需要的所有 shader 功能和变体
+
+3. **打包配置**
+   - **不要**为 lilToon shader 文件设置单独的 AssetBundle Name
+   - 只为模型 Prefab 设置 AssetBundle Name
+   - shader 会自动随 prefab 及其依赖项一起打包
+
+4. **bundleinfo.json 配置**
+   - **不要**配置 `ShaderBundlePath` 字段，或将其留空
+   - 示例：
+   
+   ```json
+   {
+     "BundleName": "MyLilToonModel",
+     "BundlePath": "mymodel.assetbundle",
+     "Models": [
+       {
+         "ModelID": "my_liltoon_char",
+         "Name": "使用 lilToon 的角色",
+         "PrefabPath": "Assets/Models/MyCharacter.prefab",
+         "Target": ["Character"]
+       }
+     ]
+   }
+   ```
+
+5. **构建 AssetBundle**
+   - 使用标准的 Unity AssetBundle 构建流程
+   - lilToon 会在构建过程中自动处理 shader 优化
+
+**注意事项：**
+
+- ✅ **推荐**：lilToon shader 随模型一起打包（不配置 ShaderBundlePath）
+- ❌ **不推荐**：将 lilToon shader 单独打包到 shader bundle
+- ⚠️ 如果遇到材质显示为粉红色，检查：
+  1. lilToon 是否已正确安装在 Unity 项目中
+  2. 材质是否正确配置了所需的属性和功能
+  3. AssetBundle 构建平台是否与运行平台一致
+- 对于其他普通着色器（非 lilToon），仍然可以使用上述的 shader bundle 功能
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。

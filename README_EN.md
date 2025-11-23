@@ -474,6 +474,74 @@ public class ShaderBundleBuilder
 6. Copy the generated `shaders.bundle` file to your model folder
 7. Configure `ShaderBundlePath` and `ShaderVariantPath` in `bundleinfo.json`
 
+#### Special Notes for lilToon Shader
+
+**lilToon is a special shader system with build-time auto-optimization mechanisms (Auto Build / Shader Stripping). For models using lilToon, we strongly recommend the following packaging strategy:**
+
+**Recommended Approach: Package lilToon Shader with the Model**
+
+Do NOT package the lilToon shader separately into a shader bundle. Instead, package it together with the model prefab in the same AssetBundle.
+
+**Reasons:**
+
+1. **Auto-Optimization Mechanism**: lilToon automatically analyzes material properties used in the scene during build time and strips unused shader variants and properties
+2. **Variant Dependencies**: If the shader is packaged separately, lilToon cannot correctly detect which variants the model actually uses, which may lead to:
+   - Loss of necessary shader variants
+   - Incomplete material properties
+   - Runtime rendering errors or pink materials
+3. **Built-in Optimization**: lilToon's shader variant collection and optimization happens automatically during the AssetBundle build process. Packaging it with the model ensures these optimizations work correctly
+
+**Step-by-Step Guide:**
+
+1. **Install lilToon**
+   - Get lilToon from the official lilToon repository or Unity Asset Store
+   - Recommended: [lilToon GitHub Repository](https://github.com/lilxyzw/lilToon)
+   - Import into your Unity project
+
+2. **Configure Materials**
+   - Create materials using the lilToon shader for your model
+   - In the material's `Advanced` settings:
+     - Consider enabling `Remove Unused Properties` to reduce final package size
+     - Ensure all shader features and variants actually needed by the model are configured
+
+3. **Packaging Configuration**
+   - Do **NOT** set a separate AssetBundle Name for lilToon shader files
+   - Only set AssetBundle Name for the model Prefab
+   - The shader will automatically be packaged with the prefab and its dependencies
+
+4. **bundleinfo.json Configuration**
+   - Do **NOT** configure the `ShaderBundlePath` field, or leave it empty
+   - Example:
+   
+   ```json
+   {
+     "BundleName": "MyLilToonModel",
+     "BundlePath": "mymodel.assetbundle",
+     "Models": [
+       {
+         "ModelID": "my_liltoon_char",
+         "Name": "Character with lilToon",
+         "PrefabPath": "Assets/Models/MyCharacter.prefab",
+         "Target": ["Character"]
+       }
+     ]
+   }
+   ```
+
+5. **Build AssetBundle**
+   - Use the standard Unity AssetBundle build workflow
+   - lilToon will automatically handle shader optimization during the build process
+
+**Important Notes:**
+
+- ✅ **Recommended**: Package lilToon shader with the model (don't configure ShaderBundlePath)
+- ❌ **Not Recommended**: Package lilToon shader separately in a shader bundle
+- ⚠️ If materials appear pink, check:
+  1. lilToon is correctly installed in the Unity project
+  2. Materials are properly configured with required properties and features
+  3. AssetBundle build platform matches the runtime platform
+- For other regular shaders (non-lilToon), you can still use the shader bundle feature described above
+
 ## Locator Points
 
 To ensure that equipment (weapons, armor, backpacks, etc.) in the game can be correctly bound to custom models, the model Prefab needs to include corresponding locator point GameObjects.
