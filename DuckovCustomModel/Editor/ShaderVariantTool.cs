@@ -162,11 +162,13 @@ namespace DuckovCustomModel.Editor
                     var shader = material.shader;
                     if (shader == null) continue;
 
-                    // Check if it's lilToon and warn
-                    if (shader.name.Contains("lilToon"))
+                    // Check if it's lilToon and warn - using StartsWith for more accurate detection
+                    if (shader.name.StartsWith("lilToon") || 
+                        shader.name.StartsWith("Hidden/lilToon") ||
+                        shader.name.Contains("/lilToon"))
                     {
                         Debug.LogWarning(
-                            $"⚠️ lilToon shader detected in material '{material.name}'!\n" +
+                            $"⚠️ lilToon shader detected in material '{material.name}' (Shader: {shader.name})!\n" +
                             "lilToon shaders should NOT use separate shader bundles. " +
                             "Please package lilToon with your materials."
                         );
@@ -235,43 +237,64 @@ namespace DuckovCustomModel.Editor
             // Create shader variant collection
             var collection = new ShaderVariantCollection();
             
+            // Common pass types to include for comprehensive coverage
+            var passTypes = new[]
+            {
+                UnityEngine.Rendering.PassType.Normal,
+                UnityEngine.Rendering.PassType.ForwardBase,
+                UnityEngine.Rendering.PassType.ForwardAdd,
+                UnityEngine.Rendering.PassType.ShadowCaster,
+                UnityEngine.Rendering.PassType.Deferred
+            };
+            
             foreach (var kvp in shaderKeywords)
             {
                 var shader = kvp.Key;
                 var keywords = kvp.Value;
 
-                // Add variant with no keywords (base variant)
-                var baseVariant = new ShaderVariantCollection.ShaderVariant(
-                    shader,
-                    UnityEngine.Rendering.PassType.Normal
-                );
-                
-                try
+                foreach (var passType in passTypes)
                 {
-                    collection.Add(baseVariant);
-                }
-                catch (System.Exception e)
-                {
-                    Debug.LogWarning($"Could not add base variant for {shader.name}: {e.Message}");
-                }
-
-                // Add variants with keywords
-                if (keywords.Count > 0)
-                {
-                    var keywordArray = keywords.ToArray();
-                    var variant = new ShaderVariantCollection.ShaderVariant(
+                    // Add variant with no keywords (base variant)
+                    var baseVariant = new ShaderVariantCollection.ShaderVariant(
                         shader,
-                        UnityEngine.Rendering.PassType.Normal,
-                        keywordArray
+                        passType
                     );
                     
                     try
                     {
-                        collection.Add(variant);
+                        collection.Add(baseVariant);
                     }
                     catch (System.Exception e)
                     {
-                        Debug.LogWarning($"Could not add variant for {shader.name} with keywords [{string.Join(", ", keywords)}]: {e.Message}");
+                        // Silently skip unsupported pass types - not all shaders support all passes
+                        if (!e.Message.Contains("does not exist") && !e.Message.Contains("not found"))
+                        {
+                            Debug.LogWarning($"Could not add base variant for {shader.name} (Pass: {passType}): {e.Message}");
+                        }
+                    }
+
+                    // Add variants with keywords
+                    if (keywords.Count > 0)
+                    {
+                        var keywordArray = keywords.ToArray();
+                        var variant = new ShaderVariantCollection.ShaderVariant(
+                            shader,
+                            passType,
+                            keywordArray
+                        );
+                        
+                        try
+                        {
+                            collection.Add(variant);
+                        }
+                        catch (System.Exception e)
+                        {
+                            // Silently skip unsupported combinations
+                            if (!e.Message.Contains("does not exist") && !e.Message.Contains("not found"))
+                            {
+                                Debug.LogWarning($"Could not add variant for {shader.name} (Pass: {passType}) with keywords [{string.Join(", ", keywords)}]: {e.Message}");
+                            }
+                        }
                     }
                 }
             }
