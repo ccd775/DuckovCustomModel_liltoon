@@ -25,7 +25,7 @@ namespace DuckovCustomModel.Managers
             }
             else
             {
-                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle.");
+                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle. This is normal for lilToon and shaders packaged with materials.");
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
@@ -74,7 +74,7 @@ namespace DuckovCustomModel.Managers
             }
             else
             {
-                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle.");
+                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle. This is normal for lilToon and shaders packaged with materials.");
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);

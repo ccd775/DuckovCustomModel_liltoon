@@ -54,7 +54,7 @@ The problem is:
 
 ### Step 1: Install lilToon
 
-1. Obtain lilToon from the [official lilToon repository](https://github.com/lilxyzw/lilToon) or BOOTH
+1. Obtain lilToon from the [official lilToon repository](https://github.com/lilxyzw/lilToon) or [BOOTH](https://booth.pm/en/items/3087170)
 2. Import the lilToon package into your Unity project
 3. Confirm that lilToon Shader is available under the `Assets/lilToon` directory
 

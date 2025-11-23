@@ -20,6 +20,14 @@ namespace DuckovCustomModel.Editor
     /// </summary>
     public class ShaderVariantTool : EditorWindow
     {
+        // Known lilToon shader name patterns for detection
+        private static readonly string[] LilToonShaderPrefixes = new[]
+        {
+            "lilToon",
+            "Hidden/lilToon",
+            "_lil/"
+        };
+
         private GameObject targetPrefab;
         private string outputPath = "Assets/ShaderVariants";
         private string collectionName = "ModelShaderVariants";
@@ -310,10 +318,8 @@ namespace DuckovCustomModel.Editor
             if (string.IsNullOrEmpty(shaderName))
                 return false;
 
-            // Check for standard lilToon shader patterns
-            return shaderName.StartsWith("lilToon") || 
-                   shaderName.StartsWith("Hidden/lilToon") ||
-                   shaderName.StartsWith("_lil/");
+            // Check against known lilToon shader patterns
+            return LilToonShaderPrefixes.Any(prefix => shaderName.StartsWith(prefix));
         }
 
         /// <summary>

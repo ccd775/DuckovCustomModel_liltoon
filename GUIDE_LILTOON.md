@@ -54,7 +54,7 @@ lilToon 是一个功能强大的 Unity Shader，为了优化性能和减小构�
 
 ### 步骤 1：安装 lilToon
 
-1. 从 [lilToon 官方仓库](https://github.com/lilxyzw/lilToon) 或 BOOTH 获取 lilToon
+1. 从 [lilToon 官方仓库](https://github.com/lilxyzw/lilToon) 或 [BOOTH](https://booth.pm/zh-cn/items/3087170) 获取 lilToon
 2. 在你的 Unity 项目中导入 lilToon 包
 3. 确认 lilToon Shader 在 `Assets/lilToon` 目录下可用
 
