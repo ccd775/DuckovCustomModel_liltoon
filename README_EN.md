@@ -2,7 +2,7 @@
 
 English | [中文](README.md)
 
-[Changelog](CHANGELOG_EN.md)
+[Changelog](CHANGELOG_EN.md) | **[lilToon Shader Guide](GUIDE_LILTOON_EN.md)**
 
 A custom player model mod for Duckov game.
 
@@ -387,6 +387,9 @@ Model Bundle Folder/
   - If not specified, will automatically use the original character's run footstep frequency setting
 
 #### Shader Bundle Support (Advanced)
+
+> **⚠️ Important Note: If you are using lilToon Shader, do NOT use a separate shader bundle!**  
+> lilToon has a special automatic optimization mechanism and must be packaged together with materials. See the **[lilToon Shader Guide](GUIDE_LILTOON_EN.md)** for details.
 
 For models using custom shaders that don't exist in the base game, you can provide a separate Shader Bundle:
 
