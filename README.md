@@ -474,6 +474,76 @@ public class ShaderBundleBuilder
 6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
 7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
 
+#### lilToon Shader 特殊说明
+
+**lilToon** 是一款功能强大的 Unity Toon Shader，但它有特殊的构建时优化机制，因此**不建议独立打包**。
+
+**为什么 lilToon 不应该独立打包：**
+
+1. **自动优化机制（Shader Stripping）**：lilToon 在构建 AssetBundle 时会自动分析材质使用的功能，并剔除未使用的变体。这个过程依赖于材质和 Shader 在同一个 Bundle 中，以便准确分析依赖关系。
+
+2. **变体丢失风险**：如果将 lilToon Shader 独立打包到单独的 Shader Bundle，会导致：
+   - 自动优化无法正确识别哪些变体被实际使用
+   - 可能产生过多不必要的 Shader 变体，增加包体积和内存占用
+   - 可能缺失必要的 Shader 变体，导致材质渲染异常或使用错误的渲染路径
+
+3. **材质属性设置**：lilToon 材质需要正确配置 `Advanced > Remove Unused Properties` 选项，此优化也依赖于 Shader 和材质的关联关系。
+
+**推荐做法：**
+
+1. **安装 lilToon 插件**：
+   - 在 Unity 项目中安装 lilToon Shader（从 [lilToon GitHub](https://github.com/lilxyzw/lilToon) 或 Unity Asset Store 获取）
+   - 确保 Shader 文件在项目中可用
+
+2. **配置材质**：
+   - 创建使用 lilToon Shader 的材质
+   - 在材质的 `Advanced` 面板中：
+     - 启用 `Remove Unused Properties`（移除未使用的属性）
+     - 根据实际使用情况调整 Shader 设置，避免包含不需要的功能
+   - 这有助于减小最终 AssetBundle 的体积
+
+3. **打包到同一个 Bundle**：
+   - **不要**为 lilToon Shader 单独设置 AssetBundle Name
+   - 让 Shader 随材质和 Prefab 一起打包到模型 Bundle 中
+   - Unity 会自动将材质引用的 Shader 包含到 AssetBundle 中
+
+4. **配置 bundleinfo.json**：
+   - **不要**配置 `ShaderBundlePath` 字段（保持为空或不包含该字段）
+   - 示例配置：
+
+```json
+{
+  "BundleName": "MyLilToonModel",
+  "BundlePath": "modelbundle.assetbundle",
+  "Models": [
+    {
+      "ModelID": "liltoon_character_01",
+      "Name": "lilToon 角色模型",
+      "PrefabPath": "Assets/Characters/LilToonChar.prefab",
+      "Target": ["Character"],
+      "Features": ["NoAutoShaderReplace"]
+    }
+  ]
+}
+```
+
+**注意事项：**
+
+- **Features 配置**：在模型的 `Features` 数组中添加 `"NoAutoShaderReplace"`，防止系统自动替换 lilToon Shader
+- **平台兼容性**：确保 AssetBundle 为目标平台（StandaloneWindows64）构建
+- **Shader 变体收集**：如果遇到渲染问题，检查是否所有必要的 Shader 变体都已正确包含在 Bundle 中
+- **测试验证**：打包后在游戏中加载测试，确认材质渲染效果正确
+
+**不推荐做法（仅供参考）：**
+
+如果出于特殊需求仍需独立打包 Shader（不推荐用于 lilToon），可以：
+1. 手动创建 ShaderVariantCollection 收集所有需要的变体
+2. 将 ShaderVariantCollection 和 Shader 一起打包到 Shader Bundle
+3. 配置 `ShaderBundlePath` 和 `ShaderVariantPath`
+4. 设置 `WarmupShaders` 为 `true`
+
+但这种方式对 lilToon 来说很难正确收集所有变体，容易出现渲染问题，因此**强烈建议采用前述推荐做法**。
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。
