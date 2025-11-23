@@ -563,10 +563,9 @@ After building the AssetBundle in Unity, you can verify using the AssetBundle Br
 2. ✅ Create materials and configure lilToon shader
 3. ✅ Enable `Remove Unused Properties` (recommended)
 4. ✅ Only set AssetBundle Name for Prefab
-5. ✅ Do NOT configure `ShaderBundlePath` in `bundleinfo.json`
+5. ✅ Do NOT configure `ShaderBundlePath` field in `bundleinfo.json`
 6. ❌ Do NOT set AssetBundle Name for lilToon shader files separately
-7. ❌ Do NOT configure `ShaderBundlePath` in `bundleinfo.json`
-8. ❌ Do NOT manually create ShaderVariantCollection for lilToon
+7. ❌ Do NOT manually create ShaderVariantCollection for lilToon
 
 ## Locator Points
 

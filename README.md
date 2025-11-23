@@ -563,10 +563,9 @@ lilToon 着色器具有特殊的构建时优化机制（Auto Build / Shader Stri
 2. ✅ 创建材质并配置 lilToon 着色器
 3. ✅ 启用 `Remove Unused Properties`（推荐）
 4. ✅ 只为 Prefab 设置 AssetBundle Name
-5. ✅ 在 `bundleinfo.json` 中不配置 `ShaderBundlePath`
+5. ✅ 在 `bundleinfo.json` 中不配置 `ShaderBundlePath` 字段
 6. ❌ 不要为 lilToon 着色器文件单独设置 AssetBundle Name
-7. ❌ 不要在 `bundleinfo.json` 中配置 `ShaderBundlePath`
-8. ❌ 不要手动创建 lilToon 的 ShaderVariantCollection
+7. ❌ 不要手动创建 lilToon 的 ShaderVariantCollection
 
 ## 定位锚点
 
