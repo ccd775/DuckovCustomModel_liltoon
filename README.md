@@ -495,7 +495,7 @@ public class ShaderBundleBuilder
 
 1. **安装 lilToon**
    - 从 lilToon 官方仓库或 Unity Asset Store 获取 lilToon
-   - 推荐访问：https://github.com/lilxyzw/lilToon
+   - 推荐访问：[lilToon GitHub 仓库](https://github.com/lilxyzw/lilToon)
    - 导入到 Unity 项目中
 
 2. **配置材质**

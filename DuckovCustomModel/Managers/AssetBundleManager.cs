@@ -398,17 +398,15 @@ namespace DuckovCustomModel.Managers
 
         /// <summary>
         /// Loads a separate shader bundle for models using custom shaders.
-        /// 
+        /// This shader bundle feature is intended for other custom shaders that don't have build-time variant stripping,
+        /// can be safely shared across multiple model bundles, and don't require scene-specific optimization.
+        /// </summary>
+        /// <remarks>
         /// IMPORTANT: This is NOT recommended for lilToon shader!
         /// - lilToon has build-time auto-optimization that requires it to be packaged WITH the model
         /// - Packaging lilToon separately may cause variant loss and rendering issues
         /// - For lilToon models, leave ShaderBundlePath empty and allow the shader to be bundled with the model
-        /// 
-        /// This shader bundle feature is intended for other custom shaders that:
-        /// - Don't have build-time variant stripping
-        /// - Can be safely shared across multiple model bundles
-        /// - Don't require scene-specific optimization
-        /// </summary>
+        /// </remarks>
         public static AssetBundle? LoadShaderBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
         {
             if (string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
