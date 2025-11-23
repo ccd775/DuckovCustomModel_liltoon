@@ -16,12 +16,22 @@ namespace DuckovCustomModel.Managers
         private static readonly Dictionary<string, UniTask<AssetBundle?>> LoadingTasks = [];
         private static readonly Dictionary<string, AssetBundle> LoadedShaderBundles = [];
 
+        private static void LogNoShaderBundle(string bundleName)
+        {
+            ModLogger.Log($"AssetBundleManager: No shader bundle configured for '{bundleName}'. " +
+                         "Using shaders from model bundle (recommended for lilToon and similar shaders).");
+        }
+
         public static AssetBundle? GetOrLoadAssetBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
         {
             // Load shader bundle first if configured
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 LoadShaderBundle(bundleInfo, forceReload);
+            }
+            else
+            {
+                LogNoShaderBundle(bundleInfo.BundleName);
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
@@ -67,6 +77,10 @@ namespace DuckovCustomModel.Managers
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 await LoadShaderBundleAsync(bundleInfo, forceReload, cancellationToken);
+            }
+            else
+            {
+                LogNoShaderBundle(bundleInfo.BundleName);
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
