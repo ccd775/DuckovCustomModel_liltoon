@@ -474,6 +474,71 @@ public class ShaderBundleBuilder
 6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
 7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
 
+### lilToon 着色器特别说明（重要）
+
+**lilToon** 是一款流行的 Unity 卡通渲染着色器，具有独特的构建时优化机制（Auto Build / Shader Stripping）。由于其特殊性，**强烈建议不要将 lilToon 着色器单独打包**，而应随模型 AssetBundle 一起打包。
+
+#### 为什么 lilToon 不适合独立打包
+
+lilToon 具有以下特点使其不适合独立打包：
+
+1. **自动构建优化**：lilToon 在构建 AssetBundle 时会自动分析场景和预制件中使用的材质属性，只保留实际使用的着色器变体
+2. **变体剔除机制**：未使用的功能和属性会在构建时被自动剔除，以减小包体积和提高性能
+3. **依赖性强**：如果将着色器独立打包，可能导致需要的着色器变体未被包含，造成材质渲染异常或功能丢失
+
+#### 使用 lilToon 的推荐工作流程
+
+**步骤 1：安装 lilToon**
+- 从 [lilToon 官方仓库](https://github.com/lilxyzw/lilToon) 下载最新版本
+- 将 lilToon 导入您的 Unity 项目
+
+**步骤 2：设置材质**
+- 为您的模型创建材质并选择 lilToon 着色器
+- 配置所需的着色器属性（颜色、纹理、光照等）
+- **重要**：在材质的 `Advanced` 设置中，关于 `Remove Unused Properties` 选项：
+  - **不要勾选** `Remove Unused Properties`，或确保您使用的所有属性都被正确标记
+  - 该选项会在构建时移除未使用的属性，可能导致游戏中动态修改材质时出现问题
+  - 如果您确定不会在运行时修改材质属性，可以勾选以减小包体积
+
+**步骤 3：打包 AssetBundle**
+- **关键**：不要给 lilToon 着色器资源设置 AssetBundle Name
+- 将着色器和材质与模型预制件一起打包到同一个 AssetBundle 中
+- Unity 会自动包含模型使用的所有依赖资源（包括着色器）
+
+**步骤 4：配置 bundleinfo.json**
+- **不要**配置 `ShaderBundlePath` 字段（留空或不包含该字段）
+- 示例配置：
+
+```json
+{
+  "BundleName": "lilToon角色模型",
+  "BundlePath": "character_liltoon.bundle",
+  "Models": [
+    {
+      "ModelID": "liltoon_char_01",
+      "Name": "lilToon 角色",
+      "PrefabPath": "Assets/Characters/LilToonChar.prefab",
+      "Target": ["Character"]
+    }
+  ]
+}
+```
+
+**注意事项**：
+- 当 `ShaderBundlePath` 为空时，加载系统会自动使用模型包中内置的着色器
+- 确保所有使用 lilToon 的材质都被正确引用在模型预制件中
+- 构建 AssetBundle 时使用相同的 Unity 版本和 lilToon 版本，确保兼容性
+
+#### 针对高级用户：标准着色器的独立打包
+
+如果您使用的是**标准 Unity 着色器**或**其他不具备自动优化的自定义着色器**，独立打包着色器仍然是可行且推荐的：
+
+1. 可以在多个模型包之间共享着色器，减少总体包体积
+2. 可以使用 ShaderVariantCollection 预热着色器变体，避免运行时编译卡顿
+3. 便于统一管理和更新着色器
+
+关于如何为标准着色器创建 ShaderVariantCollection，请参考上文的"在 Unity 中构建着色器包"部分。
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。
