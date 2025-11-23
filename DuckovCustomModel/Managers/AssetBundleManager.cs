@@ -23,6 +23,10 @@ namespace DuckovCustomModel.Managers
             {
                 LoadShaderBundle(bundleInfo, forceReload);
             }
+            else
+            {
+                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle.");
+            }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
             if (string.IsNullOrEmpty(bundlePath) || !File.Exists(bundlePath))
@@ -67,6 +71,10 @@ namespace DuckovCustomModel.Managers
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 await LoadShaderBundleAsync(bundleInfo, forceReload, cancellationToken);
+            }
+            else
+            {
+                ModLogger.Log($"AssetBundleManager: No external shader bundle configured for '{bundleInfo.BundleName}', using built-in shaders from model bundle.");
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);

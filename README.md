@@ -2,7 +2,7 @@
 
 [English](README_EN.md) | 中文
 
-[更新日志](CHANGELOG.md)
+[更新日志](CHANGELOG.md) | **[lilToon Shader 使用指南](GUIDE_LILTOON.md)**
 
 一个用于 Duckov 游戏的自定义玩家模型模组。
 
@@ -387,6 +387,9 @@ UI 界面相关配置。
   - 如果未指定，将自动使用原始角色的跑步脚步声频率设置
 
 #### 着色器包支持（高级功能）
+
+> **⚠️ 重要提示：如果您使用 lilToon Shader，请不要使用独立的着色器包！**  
+> lilToon 有特殊的自动优化机制，必须与材质一起打包。详见 **[lilToon Shader 使用指南](GUIDE_LILTOON.md)**。
 
 对于使用基础游戏中不存在的自定义着色器的模型，您可以提供单独的着色器包：
 
