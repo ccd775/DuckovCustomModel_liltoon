@@ -17,6 +17,15 @@ namespace DuckovCustomModel.Editor
     /// </summary>
     public class ShaderVariantTool : EditorWindow
     {
+        private static readonly PassType[] CommonPassTypes = 
+        {
+            PassType.Normal,
+            PassType.ForwardBase,
+            PassType.ForwardAdd,
+            PassType.ShadowCaster,
+            PassType.Deferred
+        };
+
         private GameObject[] selectedPrefabs = new GameObject[0];
         private Material[] selectedMaterials = new Material[0];
         private ShaderVariantCollection targetCollection;
@@ -199,7 +208,10 @@ namespace DuckovCustomModel.Editor
 
                 // Get enabled keywords for this material
                 var keywords = material.shaderKeywords;
-                var passType = PassType.Normal; // Default pass type
+
+                // Try to add the variant with Normal pass type as a sensible default
+                // Users can enable "Analyze All Keywords" to try additional pass types
+                var passType = PassType.Normal;
 
                 // Try to add the variant
                 var variant = new ShaderVariantCollection.ShaderVariant(shader, passType, keywords);
@@ -214,16 +226,13 @@ namespace DuckovCustomModel.Editor
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogWarning($"Could not add variant for shader {shader.name}: {e.Message}");
+                    Debug.LogWarning($"Could not add variant for shader {shader.name} with PassType.Normal: {e.Message}");
                 }
 
                 // If analyzing all keywords, try common pass types
                 if (analyzeAllKeywords)
                 {
-                    var passTypes = new[] { PassType.Normal, PassType.ForwardBase, PassType.ForwardAdd, 
-                                           PassType.ShadowCaster, PassType.Deferred };
-                    
-                    foreach (var pass in passTypes)
+                    foreach (var pass in CommonPassTypes)
                     {
                         try
                         {
@@ -234,9 +243,13 @@ namespace DuckovCustomModel.Editor
                                 addedVariants++;
                             }
                         }
-                        catch
+                        catch (System.ArgumentException)
                         {
-                            // Some pass types may not be valid for all shaders
+                            // Expected: Some pass types may not be valid for this shader
+                        }
+                        catch (System.Exception e)
+                        {
+                            Debug.LogWarning($"Could not add variant for shader {shader.name} with {pass}: {e.Message}");
                         }
                     }
                 }
