@@ -13,7 +13,14 @@ namespace DuckovCustomModel.Core.Data
         public ModelInfo[] Models { get; set; } = [];
 
         /// <summary>
-        /// Shader Bundle path (relative to model directory)
+        /// Shader Bundle path (relative to model directory).
+        /// 
+        /// IMPORTANT: NOT recommended for lilToon shader!
+        /// - Leave this empty/null for lilToon models to package the shader WITH the model
+        /// - lilToon's build-time optimization requires it to be in the same bundle as the model
+        /// - Separating lilToon shader may cause variant loss and rendering issues
+        /// 
+        /// This is intended for other custom shaders that don't have build-time optimization.
         /// </summary>
         public string? ShaderBundlePath { get; set; }
 

@@ -19,6 +19,9 @@ namespace DuckovCustomModel.Managers
         public static AssetBundle? GetOrLoadAssetBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
         {
             // Load shader bundle first if configured
+            // Note: For lilToon shader, it's recommended to package the shader WITH the model
+            // (leave ShaderBundlePath empty) to ensure proper variant stripping and optimization.
+            // Shader bundles are intended for other custom shaders that don't have build-time optimization.
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 LoadShaderBundle(bundleInfo, forceReload);
@@ -64,6 +67,9 @@ namespace DuckovCustomModel.Managers
             bool forceReload = false, CancellationToken cancellationToken = default)
         {
             // Load shader bundle first if configured
+            // Note: For lilToon shader, it's recommended to package the shader WITH the model
+            // (leave ShaderBundlePath empty) to ensure proper variant stripping and optimization.
+            // Shader bundles are intended for other custom shaders that don't have build-time optimization.
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 await LoadShaderBundleAsync(bundleInfo, forceReload, cancellationToken);
@@ -390,6 +396,19 @@ namespace DuckovCustomModel.Managers
 
         #region Shader Bundle Management
 
+        /// <summary>
+        /// Loads a separate shader bundle for models using custom shaders.
+        /// 
+        /// IMPORTANT: This is NOT recommended for lilToon shader!
+        /// - lilToon has build-time auto-optimization that requires it to be packaged WITH the model
+        /// - Packaging lilToon separately may cause variant loss and rendering issues
+        /// - For lilToon models, leave ShaderBundlePath empty and let the shader bundle with the model
+        /// 
+        /// This shader bundle feature is intended for other custom shaders that:
+        /// - Don't have build-time variant stripping
+        /// - Can be safely shared across multiple model bundles
+        /// - Don't require scene-specific optimization
+        /// </summary>
         public static AssetBundle? LoadShaderBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
         {
             if (string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
