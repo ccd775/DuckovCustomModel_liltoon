@@ -474,6 +474,130 @@ public class ShaderBundleBuilder
 6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
 7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
 
+### lilToon Shader 使用指南
+
+**重要提示**：如果您的模型使用 **lilToon** Shader，请**不要**将其独立打包为 Shader Bundle！lilToon 有特殊的构建时自动优化机制，需要与模型一起打包。
+
+#### 为什么 lilToon 不需要独立打包
+
+lilToon Shader 具有以下特性：
+
+1. **自动优化机制（Auto Build）**：在构建 AssetBundle 时，lilToon 会自动分析材质使用的功能，并生成优化后的 Shader 变体
+2. **Shader Stripping**：未使用的功能会在构建时被自动剔除，减小包体积并提升性能
+3. **构建时依赖**：这些优化发生在构建阶段，需要材质和 Shader 在同一个 AssetBundle 中
+
+如果将 lilToon Shader 独立打包，会导致：
+- 自动优化失效，无法生成正确的 Shader 变体
+- 材质加载时可能找不到所需的 Shader 变体
+- 模型在游戏中可能显示为粉红色或渲染异常
+
+#### lilToon 模型打包流程
+
+**1. 安装 lilToon 插件**
+
+从 [lilToon 官方仓库](https://github.com/lilxyzw/lilToon) 或 Unity Asset Store 下载并导入 lilToon 到您的 Unity 项目中。
+
+**2. 配置材质属性**
+
+在为模型创建材质时，需要注意以下设置：
+
+- 导航到材质的 `Advanced（高级）` 部分
+- **关闭** `Remove Unused Properties` 选项
+  - 如果启用此选项，lilToon 会在保存材质时删除未使用的属性
+  - 这可能导致某些变体在运行时不可用
+  - 建议保持关闭以确保所有功能在游戏中正常工作
+
+**3. 打包 AssetBundle**
+
+将 Shader 与模型 Prefab 打包在同一个 AssetBundle 中：
+
+- **不要**给 lilToon Shader 文件设置 AssetBundle Name
+- 只需要给模型 Prefab 和材质设置 AssetBundle Name
+- lilToon Shader 会作为依赖项自动包含在模型的 AssetBundle 中
+
+在 Unity Editor 中：
+```
+模型文件夹/
+├── MyModel.prefab          # 设置 AssetBundle Name: "mymodel"
+├── Materials/
+│   └── MyMaterial.mat      # 材质会自动包含在 mymodel 中
+└── Shaders/
+    └── lilToon.shader      # 不要设置 AssetBundle Name！
+```
+
+**4. 配置 bundleinfo.json**
+
+在 `bundleinfo.json` 中，**不要**配置 `ShaderBundlePath`：
+
+```json
+{
+  "BundleName": "My lilToon Model",
+  "BundlePath": "modelbundle.assetbundle",
+  "Models": [
+    {
+      "ModelID": "liltoon_character_01",
+      "Name": "lilToon 角色",
+      "PrefabPath": "Assets/Characters/MyCharacter.prefab",
+      "Target": ["Character"],
+      "Features": ["NoAutoShaderReplace"]
+    }
+  ]
+}
+```
+
+**注意事项**：
+- `ShaderBundlePath` 字段应当省略或留空（不设置）
+- 必须在 `Features` 数组中添加 `"NoAutoShaderReplace"`，以防止系统自动替换 lilToon Shader
+- Shader 会随模型 AssetBundle 一起加载，无需单独加载
+
+**5. 构建和测试**
+
+在 Unity 中构建 AssetBundle：
+
+```csharp
+// 示例构建脚本
+BuildPipeline.BuildAssetBundles(
+    outputPath,
+    BuildAssetBundleOptions.None,
+    BuildTarget.StandaloneWindows64
+);
+```
+
+构建完成后：
+1. 将生成的 `modelbundle.assetbundle` 文件复制到模型文件夹
+2. 将 `bundleinfo.json` 和缩略图等文件一起放入模型文件夹
+3. 将整个模型文件夹放置到 `ModConfigs/DuckovCustomModel/Models` 目录
+4. 启动游戏测试模型是否正常显示
+
+#### 常见问题
+
+**Q: 模型显示为粉红色，怎么办？**
+
+A: 检查以下几点：
+1. 确认 lilToon Shader 文件没有被设置 AssetBundle Name
+2. 确认材质和 Shader 在同一个 AssetBundle 中
+3. 确认 `bundleinfo.json` 中添加了 `"NoAutoShaderReplace"` 特性
+4. 确认 `ShaderBundlePath` 没有被配置
+
+**Q: 可以同时使用 lilToon 和其他自定义 Shader 吗？**
+
+A: 可以，但需要分别处理：
+- lilToon Shader 应该与模型一起打包（不使用 `ShaderBundlePath`）
+- 其他自定义 Shader 可以使用独立的 Shader Bundle（配置 `ShaderBundlePath`）
+- 但同一个模型包中建议只使用一种策略
+
+**Q: lilToon 的哪些功能可以在游戏中正常使用？**
+
+A: lilToon 的大部分功能都可以正常使用，包括：
+- 基础渲染（Lighting、Shadow、Normal Map 等）
+- 轮廓线（Outline）
+- 发光（Emission）
+- Matcap
+- Rim Light
+- 自定义着色（Main Color、Shadow Color 等）
+
+但请注意，某些高级功能可能需要特定的渲染管线支持。
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。

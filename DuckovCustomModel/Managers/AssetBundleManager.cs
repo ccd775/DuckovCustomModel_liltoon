@@ -23,6 +23,10 @@ namespace DuckovCustomModel.Managers
             {
                 LoadShaderBundle(bundleInfo, forceReload);
             }
+            else
+            {
+                ModLogger.LogDebug($"AssetBundleManager: No shader bundle configured for '{bundleInfo.BundleName}'. Shaders will be loaded from the model bundle itself (recommended for lilToon).");
+            }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
             if (string.IsNullOrEmpty(bundlePath) || !File.Exists(bundlePath))
@@ -67,6 +71,10 @@ namespace DuckovCustomModel.Managers
             if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
             {
                 await LoadShaderBundleAsync(bundleInfo, forceReload, cancellationToken);
+            }
+            else
+            {
+                ModLogger.LogDebug($"AssetBundleManager: No shader bundle configured for '{bundleInfo.BundleName}'. Shaders will be loaded from the model bundle itself (recommended for lilToon).");
             }
 
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
