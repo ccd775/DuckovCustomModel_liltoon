@@ -480,7 +480,7 @@ public class ShaderBundleBuilder
 
 ##### Why lilToon Should Not Be Packaged Separately?
 
-lilToon shader has a special build-time optimization mechanism (Auto Build / Shader Stripping) that automatically analyzes the features used by materials during AssetBundle building and generates optimized, minimal shader variants. This process requires materials and shaders to be in the same AssetBundle.
+lilToon shader has a special build-time optimization mechanism (Auto Build / Shader Stripping). This mechanism automatically analyzes the features used by materials during AssetBundle building and generates optimized, minimal shader variants. This process requires materials and shaders to be in the same AssetBundle.
 
 **Packaging lilToon separately may lead to:**
 - Loss of shader variants, causing materials to render incorrectly

@@ -480,7 +480,7 @@ public class ShaderBundleBuilder
 
 ##### 为什么 lilToon 不适合独立打包？
 
-lilToon 着色器具有特殊的构建时优化机制（Auto Build / Shader Stripping），它会在构建 AssetBundle 时自动分析材质使用的功能，并生成针对性的精简着色器变体。这个过程依赖于材质和着色器在同一个 AssetBundle 中。
+lilToon 着色器具有特殊的构建时优化机制（Auto Build / Shader Stripping）。它会在构建 AssetBundle 时自动分析材质使用的功能，并生成针对性的精简着色器变体。这个过程依赖于材质和着色器在同一个 AssetBundle 中。
 
 **如果将 lilToon 着色器独立打包，可能会导致：**
 - 着色器变体丢失，材质无法正确渲染
