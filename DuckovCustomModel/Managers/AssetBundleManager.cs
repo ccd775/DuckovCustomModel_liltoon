@@ -402,7 +402,7 @@ namespace DuckovCustomModel.Managers
         /// IMPORTANT: This is NOT recommended for lilToon shader!
         /// - lilToon has build-time auto-optimization that requires it to be packaged WITH the model
         /// - Packaging lilToon separately may cause variant loss and rendering issues
-        /// - For lilToon models, leave ShaderBundlePath empty and let the shader bundle with the model
+        /// - For lilToon models, leave ShaderBundlePath empty and allow the shader to be bundled with the model
         /// 
         /// This shader bundle feature is intended for other custom shaders that:
         /// - Don't have build-time variant stripping

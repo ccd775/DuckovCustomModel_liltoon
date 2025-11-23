@@ -494,7 +494,8 @@ Do NOT package the lilToon shader separately into a shader bundle. Instead, pack
 **Step-by-Step Guide:**
 
 1. **Install lilToon**
-   - Get lilToon from [lilToon GitHub](https://github.com/lilxyzw/lilToon) or Unity Asset Store
+   - Get lilToon from the official lilToon repository or Unity Asset Store
+   - Recommended: https://github.com/lilxyzw/lilToon
    - Import into your Unity project
 
 2. **Configure Materials**
