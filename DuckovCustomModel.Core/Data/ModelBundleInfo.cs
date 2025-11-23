@@ -12,6 +12,21 @@ namespace DuckovCustomModel.Core.Data
 
         public ModelInfo[] Models { get; set; } = [];
 
+        /// <summary>
+        /// Shader Bundle path (relative to model directory)
+        /// </summary>
+        public string? ShaderBundlePath { get; set; }
+
+        /// <summary>
+        /// Shader Variant Collection asset path within the Shader Bundle
+        /// </summary>
+        public string? ShaderVariantPath { get; set; }
+
+        /// <summary>
+        /// Whether to warmup shader variants on load
+        /// </summary>
+        public bool WarmupShaders { get; set; } = true;
+
         [JsonIgnore] public string DirectoryPath { get; internal set; } = string.Empty;
 
         public static ModelBundleInfo? LoadFromDirectory(string directoryPath,
@@ -52,6 +67,9 @@ namespace DuckovCustomModel.Core.Data
             {
                 BundleName = BundleName,
                 BundlePath = BundlePath,
+                ShaderBundlePath = ShaderBundlePath,
+                ShaderVariantPath = ShaderVariantPath,
+                WarmupShaders = WarmupShaders,
                 Models = filteredModels,
                 DirectoryPath = DirectoryPath,
             };

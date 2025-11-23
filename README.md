@@ -386,6 +386,94 @@ UI 界面相关配置。
   - 用于控制角色跑步时脚步声的播放频率
   - 如果未指定，将自动使用原始角色的跑步脚步声频率设置
 
+#### 着色器包支持（高级功能）
+
+对于使用基础游戏中不存在的自定义着色器的模型，您可以提供单独的着色器包：
+
+- `ShaderBundlePath`（可选）：着色器 AssetBundle 文件路径，相对于模型包文件夹
+  - 包含自定义着色器，可选包含 ShaderVariantCollection
+  - 在模型包之前加载，确保材质加载时着色器可用
+  - 示例：`"shaders.bundle"`
+- `ShaderVariantPath`（可选）：着色器包中 ShaderVariantCollection 资源的路径
+  - 用于着色器预热，防止运行时编译卡顿
+  - 仅在 `WarmupShaders` 为 true 时使用
+  - 示例：`"Assets/ShaderVariants/CharacterShaders.shadervariants"`
+- `WarmupShaders`（可选）：是否在加载时预热着色器变体（默认：`true`）
+  - 为 true 时，着色器在加载期间编译，防止游戏过程中卡顿
+  - 为 false 时，着色器按需编译（可能导致掉帧）
+
+**包含着色器包的示例：**
+
+```json
+{
+  "BundleName": "CustomCharacterWithShaders",
+  "BundlePath": "character.bundle",
+  "ShaderBundlePath": "shaders.bundle",
+  "ShaderVariantPath": "Assets/ShaderVariants/CharacterShaders.shadervariants",
+  "WarmupShaders": true,
+  "Models": [
+    {
+      "ModelID": "custom_char_01",
+      "Name": "自定义角色",
+      "PrefabPath": "Assets/Characters/CustomChar.prefab",
+      "Target": ["Character"],
+      "Features": ["NoAutoShaderReplace"]
+    }
+  ]
+}
+```
+
+**重要说明：**
+- 使用自定义着色器时，需在 `Features` 数组中添加 `"NoAutoShaderReplace"` 以防止自动替换着色器
+- 着色器包在卸载后会保留在内存中以保留着色器资源
+- 平台支持：初期支持 Windows (StandaloneWindows64) - 确保着色器包为正确平台构建
+- 着色器包是可选的 - 不使用自定义着色器的模型与之前一样工作
+
+**在 Unity 中构建着色器包：**
+
+1. 在 Unity 项目中创建着色器变体文件夹（例如 `Assets/ShaderVariants`）
+2. 创建 ShaderVariantCollection：`Create > Shader Variant Collection`
+3. 将自定义着色器添加到集合中并配置变体
+4. 创建 Editor 脚本来构建着色器包：
+
+```csharp
+using UnityEditor;
+using UnityEngine;
+
+public class ShaderBundleBuilder
+{
+    [MenuItem("Assets/Build Shader Bundle")]
+    static void BuildShaderBundle()
+    {
+        // 确保输出目录存在
+        string outputPath = "Assets/../Output";
+        if (!System.IO.Directory.Exists(outputPath))
+            System.IO.Directory.CreateDirectory(outputPath);
+
+        // 构建着色器包
+        BuildPipeline.BuildAssetBundles(
+            outputPath,
+            new AssetBundleBuild[] {
+                new AssetBundleBuild {
+                    assetBundleName = "shaders.bundle",
+                    assetNames = new[] {
+                        "Assets/ShaderVariants/CharacterShaders.shadervariants"
+                    }
+                }
+            },
+            BuildAssetBundleOptions.None,
+            BuildTarget.StandaloneWindows64
+        );
+        
+        Debug.Log("着色器包构建成功！");
+    }
+}
+```
+
+5. 运行脚本：`Assets > Build Shader Bundle`
+6. 将生成的 `shaders.bundle` 文件复制到模型文件夹
+7. 在 `bundleinfo.json` 中配置 `ShaderBundlePath` 和 `ShaderVariantPath`
+
 ## 定位锚点
 
 为了确保游戏中的装备（武器、护甲、背包等）能够正确绑定到自定义模型上，模型 Prefab 需要包含相应的定位锚点（Locator）GameObject。

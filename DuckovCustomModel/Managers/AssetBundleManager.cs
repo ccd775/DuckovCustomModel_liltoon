@@ -14,9 +14,16 @@ namespace DuckovCustomModel.Managers
     {
         private static readonly Dictionary<string, AssetBundle> LoadedBundles = [];
         private static readonly Dictionary<string, UniTask<AssetBundle?>> LoadingTasks = [];
+        private static readonly Dictionary<string, AssetBundle> LoadedShaderBundles = [];
 
         public static AssetBundle? GetOrLoadAssetBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
         {
+            // Load shader bundle first if configured
+            if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
+            {
+                LoadShaderBundle(bundleInfo, forceReload);
+            }
+
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
             if (string.IsNullOrEmpty(bundlePath) || !File.Exists(bundlePath))
             {
@@ -56,6 +63,12 @@ namespace DuckovCustomModel.Managers
         public static async UniTask<AssetBundle?> GetOrLoadAssetBundleAsync(ModelBundleInfo bundleInfo,
             bool forceReload = false, CancellationToken cancellationToken = default)
         {
+            // Load shader bundle first if configured
+            if (!string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
+            {
+                await LoadShaderBundleAsync(bundleInfo, forceReload, cancellationToken);
+            }
+
             var bundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.BundlePath);
             if (string.IsNullOrEmpty(bundlePath) || !File.Exists(bundlePath))
             {
@@ -165,6 +178,10 @@ namespace DuckovCustomModel.Managers
             foreach (var bundle in LoadedBundles.Values) bundle.Unload(unloadAllLoadedObjects);
             LoadedBundles.Clear();
             LoadingTasks.Clear();
+            
+            foreach (var bundle in LoadedShaderBundles.Values) 
+                bundle.Unload(unloadAllLoadedObjects);
+            LoadedShaderBundles.Clear();
         }
 
         public static T? LoadAssetFromBundle<T>(ModelBundleInfo bundleInfo, string assetPath) where T : Object
@@ -370,5 +387,216 @@ namespace DuckovCustomModel.Managers
                 return null;
             }
         }
+
+        #region Shader Bundle Management
+
+        public static AssetBundle? LoadShaderBundle(ModelBundleInfo bundleInfo, bool forceReload = false)
+        {
+            if (string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
+            {
+                return null; // No shader bundle configured
+            }
+
+            var shaderBundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.ShaderBundlePath);
+            
+            if (!File.Exists(shaderBundlePath))
+            {
+                ModLogger.LogError($"Shader bundle not found at: {shaderBundlePath}");
+                return null;
+            }
+
+            // Check if already loaded
+            if (!forceReload && LoadedShaderBundles.TryGetValue(shaderBundlePath, out var existingBundle))
+            {
+                ModLogger.Log($"Shader bundle already loaded: {bundleInfo.ShaderBundlePath}");
+                return existingBundle;
+            }
+
+            try
+            {
+                var bundleData = File.ReadAllBytes(shaderBundlePath);
+                var shaderBundle = AssetBundle.LoadFromMemory(bundleData);
+                
+                if (shaderBundle == null)
+                {
+                    ModLogger.LogError($"Failed to load shader bundle from: {shaderBundlePath}");
+                    return null;
+                }
+
+                // Unload old bundle if reloading
+                if (forceReload && LoadedShaderBundles.TryGetValue(shaderBundlePath, out var oldBundle))
+                {
+                    oldBundle.Unload(false); // Don't unload shader assets to prevent shaders from being destroyed and causing missing material errors
+                    LoadedShaderBundles.Remove(shaderBundlePath);
+                }
+
+                LoadedShaderBundles[shaderBundlePath] = shaderBundle;
+                ModLogger.Log($"Shader bundle loaded successfully: {bundleInfo.ShaderBundlePath}");
+
+                // Warmup shader variants if configured
+                if (bundleInfo.WarmupShaders && !string.IsNullOrEmpty(bundleInfo.ShaderVariantPath))
+                {
+                    WarmupShaderVariants(shaderBundle, bundleInfo.ShaderVariantPath);
+                }
+
+                return shaderBundle;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.LogError($"Exception while loading shader bundle: {ex}");
+                return null;
+            }
+        }
+
+        public static async UniTask<AssetBundle?> LoadShaderBundleAsync(
+            ModelBundleInfo bundleInfo, 
+            bool forceReload = false,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrEmpty(bundleInfo.ShaderBundlePath))
+            {
+                return null;
+            }
+
+            var shaderBundlePath = Path.Combine(bundleInfo.DirectoryPath, bundleInfo.ShaderBundlePath);
+            
+            if (!File.Exists(shaderBundlePath))
+            {
+                ModLogger.LogError($"Shader bundle not found at: {shaderBundlePath}");
+                return null;
+            }
+
+            if (!forceReload && LoadedShaderBundles.TryGetValue(shaderBundlePath, out var existingBundle))
+            {
+                ModLogger.Log($"Shader bundle already loaded: {bundleInfo.ShaderBundlePath}");
+                return existingBundle;
+            }
+
+            try
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+
+                const int bufferSize = 64 * 1024;
+                byte[] bundleData;
+                await using (var fileStream = new FileStream(
+                    shaderBundlePath, 
+                    FileMode.Open, 
+                    FileAccess.Read, 
+                    FileShare.Read, 
+                    4096, 
+                    true))
+                {
+                    bundleData = new byte[fileStream.Length];
+                    var bytesRead = 0;
+
+                    while (bytesRead < bundleData.Length)
+                    {
+                        cancellationToken.ThrowIfCancellationRequested();
+                        var remaining = bundleData.Length - bytesRead;
+                        var toRead = Math.Min(bufferSize, remaining);
+                        var read = await fileStream.ReadAsync(bundleData, bytesRead, toRead, cancellationToken)
+                            .ConfigureAwait(false);
+                        if (read == 0) break;
+
+                        bytesRead += read;
+
+                        if (bytesRead % (512 * 1024) == 0)
+                            await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                    }
+                }
+
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+
+                var shaderBundle = AssetBundle.LoadFromMemory(bundleData);
+                
+                if (shaderBundle == null)
+                {
+                    ModLogger.LogError($"Failed to load shader bundle from: {shaderBundlePath}");
+                    return null;
+                }
+
+                if (forceReload && LoadedShaderBundles.TryGetValue(shaderBundlePath, out var oldBundle))
+                {
+                    oldBundle.Unload(false);
+                    LoadedShaderBundles.Remove(shaderBundlePath);
+                }
+
+                LoadedShaderBundles[shaderBundlePath] = shaderBundle;
+                ModLogger.Log($"Shader bundle loaded successfully: {bundleInfo.ShaderBundlePath}");
+
+                if (bundleInfo.WarmupShaders && !string.IsNullOrEmpty(bundleInfo.ShaderVariantPath))
+                {
+                    await WarmupShaderVariantsAsync(shaderBundle, bundleInfo.ShaderVariantPath, cancellationToken);
+                }
+
+                return shaderBundle;
+            }
+            catch (Exception ex)
+            {
+                ModLogger.LogError($"Exception while loading shader bundle: {ex}");
+                return null;
+            }
+        }
+
+        private static void WarmupShaderVariants(AssetBundle shaderBundle, string variantPath)
+        {
+            try
+            {
+                var shaderVariants = shaderBundle.LoadAsset<ShaderVariantCollection>(variantPath);
+                if (shaderVariants != null)
+                {
+                    shaderVariants.WarmUp();
+                    ModLogger.Log($"Warmed up {shaderVariants.variantCount} shader variants from: {variantPath}");
+                }
+                else
+                {
+                    ModLogger.LogWarning($"Shader variant collection not found at: {variantPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.LogError($"Failed to warmup shader variants: {ex}");
+            }
+        }
+
+        private static async UniTask WarmupShaderVariantsAsync(
+            AssetBundle shaderBundle, 
+            string variantPath,
+            CancellationToken cancellationToken)
+        {
+            try
+            {
+                await UniTask.Yield(PlayerLoopTiming.Update, cancellationToken);
+                
+                var shaderVariants = shaderBundle.LoadAsset<ShaderVariantCollection>(variantPath);
+                if (shaderVariants != null)
+                {
+                    shaderVariants.WarmUp();
+                    ModLogger.Log($"Warmed up {shaderVariants.variantCount} shader variants from: {variantPath}");
+                }
+                else
+                {
+                    ModLogger.LogWarning($"Shader variant collection not found at: {variantPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                ModLogger.LogError($"Failed to warmup shader variants: {ex}");
+            }
+        }
+
+        public static void UnloadShaderBundle(string shaderBundlePath, bool unloadAllLoadedObjects = false)
+        {
+            if (string.IsNullOrEmpty(shaderBundlePath)) return;
+
+            if (LoadedShaderBundles.TryGetValue(shaderBundlePath, out var bundle))
+            {
+                bundle.Unload(unloadAllLoadedObjects);
+                LoadedShaderBundles.Remove(shaderBundlePath);
+                ModLogger.Log($"Shader bundle unloaded: {shaderBundlePath}");
+            }
+        }
+
+        #endregion
     }
 }
