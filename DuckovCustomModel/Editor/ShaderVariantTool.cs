@@ -243,9 +243,10 @@ namespace DuckovCustomModel.Editor
                                 addedVariants++;
                             }
                         }
-                        catch (System.ArgumentException)
+                        catch (System.ArgumentException ex)
                         {
                             // Expected: Some pass types may not be valid for this shader
+                            Debug.Log($"Skipping {pass} for shader {shader.name}: {ex.Message}");
                         }
                         catch (System.Exception e)
                         {
