@@ -224,9 +224,9 @@ namespace DuckovCustomModel.Editor
                         addedVariants++;
                     }
                 }
-                catch (System.Exception e)
+                catch (System.ArgumentException ex)
                 {
-                    Debug.LogWarning($"Could not add variant for shader {shader.name} with PassType.Normal: {e.Message}");
+                    Debug.LogWarning($"Could not add variant for shader {shader.name} with PassType.Normal: {ex.Message}");
                 }
 
                 // If analyzing all keywords, try common pass types
@@ -247,10 +247,6 @@ namespace DuckovCustomModel.Editor
                         {
                             // Expected: Some pass types may not be valid for this shader
                             Debug.Log($"Skipping {pass} for shader {shader.name}: {ex.Message}");
-                        }
-                        catch (System.Exception e)
-                        {
-                            Debug.LogWarning($"Could not add variant for shader {shader.name} with {pass}: {e.Message}");
                         }
                     }
                 }
